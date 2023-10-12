@@ -7,7 +7,7 @@ use bevy::prelude::*;
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
-        .add_gizmo_config::<MyGizmos>()
+        .init_gizmo_config::<MyGizmos>()
         .add_systems(Startup, setup)
         .add_systems(Update, (system, update_config))
         .run();

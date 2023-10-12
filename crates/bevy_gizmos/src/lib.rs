@@ -87,8 +87,8 @@ impl Plugin for GizmoPlugin {
             .init_asset::<LineGizmo>()
             .add_plugins(RenderAssetPlugin::<LineGizmo>::default())
             .init_resource::<LineGizmoHandles>()
-            .add_gizmo_config::<DefaultGizmos>()
-            .add_gizmo_config::<AabbGizmos>()
+            .init_gizmo_config::<DefaultGizmos>()
+            .init_gizmo_config::<AabbGizmos>()
             .add_systems(
                 PostUpdate,
                 (
@@ -141,11 +141,11 @@ impl Plugin for GizmoPlugin {
 /// A trait adding `add_gizmos<T>()` to the app
 pub trait AppGizmoBuilder {
     /// Adds a [`GizmoConfig<T>`] to the app enabling the use of [`Gizmos<T>`].
-    fn add_gizmo_config<T: CustomGizmoConfig>(&mut self) -> &mut Self;
+    fn init_gizmo_config<T: CustomGizmoConfig>(&mut self) -> &mut Self;
 }
 
 impl AppGizmoBuilder for App {
-    fn add_gizmo_config<T: CustomGizmoConfig>(&mut self) -> &mut Self {
+    fn init_gizmo_config<T: CustomGizmoConfig>(&mut self) -> &mut Self {
         self.init_resource::<GizmoConfig<T>>()
             .init_resource::<GizmoStorage<T>>()
             .add_systems(Last, update_gizmo_meshes::<T>);

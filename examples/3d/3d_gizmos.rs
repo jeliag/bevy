@@ -19,7 +19,7 @@ fn main() {
                 .into(),
             }),
         )
-        .add_gizmo_config::<MyGizmos>()
+        .init_gizmo_config::<MyGizmos>()
         .add_systems(Startup, setup)
         .add_systems(Update, (system, rotate_camera, update_config))
         .run();
