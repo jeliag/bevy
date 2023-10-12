@@ -67,12 +67,13 @@ fn system(mut gizmos: Gizmos, mut my_gizmos: Gizmos<MyGizmoConfig>, time: Res<Ti
 }
 
 fn update_config(
-    mut config: Query<&mut GizmoConfig, With<DefaultGizmoConfig>>,
-    mut my_config: Query<&mut GizmoConfig, With<MyGizmoConfig>>,
+    mut config_q: Query<&mut GizmoConfig>,
+    default_entity: Query<Entity, With<DefaultGizmoConfig>>,
+    my_entity: Query<Entity, With<MyGizmoConfig>>,
     keyboard: Res<Input<KeyCode>>,
     time: Res<Time>,
 ) {
-    let mut config = config.single_mut();
+    let mut config = config_q.get_mut(default_entity.single()).unwrap();
     if keyboard.pressed(KeyCode::Right) {
         config.line_width += 5. * time.delta_seconds();
         config.line_width = config.line_width.clamp(0., 50.);
@@ -85,7 +86,7 @@ fn update_config(
         config.enabled ^= true;
     }
 
-    let mut my_config = my_config.single_mut();
+    let mut my_config = config_q.get_mut(my_entity.single()).unwrap();
     if keyboard.pressed(KeyCode::Up) {
         my_config.line_width += 5. * time.delta_seconds();
         my_config.line_width = my_config.line_width.clamp(0., 50.);

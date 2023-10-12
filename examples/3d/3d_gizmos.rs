@@ -115,13 +115,14 @@ fn rotate_camera(mut query: Query<&mut Transform, With<Camera>>, time: Res<Time>
 }
 
 fn update_config(
-    mut config: Query<&mut GizmoConfig, With<DefaultGizmoConfig>>,
-    mut my_config: Query<&mut GizmoConfig, With<MyGizmoConfig>>,
+    mut config_q: Query<&mut GizmoConfig>,
+    default_entity: Query<Entity, With<DefaultGizmoConfig>>,
+    my_entity: Query<Entity, With<MyGizmoConfig>>,
     mut aabb_config: Query<&mut AabbGizmoConfig>,
     keyboard: Res<Input<KeyCode>>,
     time: Res<Time>,
 ) {
-    let mut config = config.single_mut();
+    let mut config = config_q.get_mut(default_entity.single()).unwrap();
     if keyboard.just_pressed(KeyCode::D) {
         config.depth_bias = if config.depth_bias == 0. { -1. } else { 0. };
     }
@@ -144,7 +145,7 @@ fn update_config(
         config.enabled ^= true;
     }
 
-    let mut my_config = my_config.single_mut();
+    let mut my_config = config_q.get_mut(my_entity.single()).unwrap();
     if keyboard.just_pressed(KeyCode::D) {
         my_config.depth_bias = if my_config.depth_bias == 0. { -1. } else { 0. };
     }
