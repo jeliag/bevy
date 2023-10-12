@@ -7,7 +7,7 @@ use bevy_render::{color::Color, view::RenderLayers};
 ///
 /// Here you can store additional configuration for you gizmos not covered by [`GizmoConfig`]
 ///
-/// Make sure to derive [`Default`], [`Clone`] and register in the app using `app.init_gizmo_config::<T>()`
+/// Make sure to derive [`Default`], [`Component`], and register in the app using `app.init_gizmo_config::<T>()`
 pub trait CustomGizmoConfig: 'static + Default + Component + Send + Sync {}
 
 /// The default gizmo config.
