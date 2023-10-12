@@ -26,7 +26,7 @@ fn main() {
 }
 
 // We can create our own gizmo config!
-#[derive(Default, Clone, TypePath)]
+#[derive(Default)]
 struct MyGizmos {}
 
 impl CustomGizmoConfig for MyGizmos {}
