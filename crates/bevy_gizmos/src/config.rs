@@ -1,22 +1,21 @@
 //! A module for the [`GizmoConfig<T>`] [`Resource`].
 
 use bevy_ecs::{component::Component, system::Resource};
-use bevy_reflect::TypePath;
 use bevy_render::{color::Color, view::RenderLayers};
 
 /// A trait used for custom gizmo configs.
 ///
-/// Make sure to derive [`Default`], [`Clone`], [`TypePath`] and register in the app using `app.add_gizmos::<T>()`
-pub trait CustomGizmoConfig: 'static + Default + Clone + TypePath + Send + Sync {}
+/// Make sure to derive [`Default`] and register in the app using `app.add_gizmos::<T>()`
+pub trait CustomGizmoConfig: 'static + Default + Send + Sync {}
 
 /// The default gizmo config.
-#[derive(Default, Clone, TypePath)]
-pub struct GlobalGizmos;
-impl CustomGizmoConfig for GlobalGizmos {}
+#[derive(Default)]
+pub struct DefaultGizmos;
+impl CustomGizmoConfig for DefaultGizmos {}
 
 /// A struct that stores configuration for gizmos.
 #[derive(Resource, Clone)]
-pub struct GizmoConfig<T: CustomGizmoConfig = GlobalGizmos> {
+pub struct GizmoConfig<T: CustomGizmoConfig = DefaultGizmos> {
     /// Set to `false` to stop drawing gizmos.
     ///
     /// Defaults to `true`.
@@ -90,7 +89,7 @@ impl<T: CustomGizmoConfig> From<&GizmoConfig<T>> for ExtractedGizmoConfig {
 }
 
 /// Configuration for drawing the [`Aabb`] component on entities.
-#[derive(Clone, Default, TypePath)]
+#[derive(Default)]
 pub struct AabbGizmos {
     /// Draws all bounding boxes in the scene when set to `true`.
     ///

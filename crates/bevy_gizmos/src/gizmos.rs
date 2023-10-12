@@ -10,7 +10,7 @@ use bevy_math::{Mat2, Quat, Vec2, Vec3};
 use bevy_render::color::Color;
 use bevy_transform::TransformPoint;
 
-use crate::{config::CustomGizmoConfig, config::GlobalGizmos, prelude::GizmoConfig};
+use crate::{config::CustomGizmoConfig, config::DefaultGizmos, prelude::GizmoConfig};
 
 type PositionItem = [f32; 3];
 type ColorItem = [f32; 4];
@@ -32,7 +32,7 @@ pub(crate) struct GizmoStorage<T: CustomGizmoConfig> {
 /// the frames in which they are spawned.
 /// Gizmos should be spawned before the [`Last`](bevy_app::Last) schedule to ensure they are drawn.
 #[derive(SystemParam)]
-pub struct Gizmos<'w, 's, T: CustomGizmoConfig = GlobalGizmos> {
+pub struct Gizmos<'w, 's, T: CustomGizmoConfig = DefaultGizmos> {
     buffer: Deferred<'s, GizmoBuffer<T>>,
     config: Res<'w, GizmoConfig<T>>,
     marker: PhantomData<T>,
