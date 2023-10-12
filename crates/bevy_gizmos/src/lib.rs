@@ -29,7 +29,7 @@ mod pipeline_3d;
 pub mod prelude {
     #[doc(hidden)]
     pub use crate::{
-        config::{AabbGizmoConfig, CustomGizmoConfig, DefaultGizmoConfig, GizmoConfig, GizmoConfigStore},
+        config::{AabbGizmoConfig, CustomGizmoConfig, DefaultGizmoConfig, GizmoConfig},
         gizmos::Gizmos,
         AppGizmoBuilder, ShowAabbGizmo,
     };
@@ -41,7 +41,7 @@ use bevy_core::cast_slice;
 use bevy_ecs::{
     component::Component,
     entity::Entity,
-    query::{ROQueryItem, Without},
+    query::{ROQueryItem, With, Without},
     reflect::ReflectComponent,
     schedule::IntoSystemConfigs,
     system::{
@@ -70,7 +70,7 @@ use bevy_transform::{
     TransformSystem,
 };
 use bevy_utils::{tracing::warn, HashMap};
-use config::{AabbGizmoConfig, CustomGizmoConfig, DefaultGizmoConfig, GizmoConfigStore};
+use config::{AabbGizmoConfig, CustomGizmoConfig, DefaultGizmoConfig, GizmoConfig};
 use gizmos::{GizmoStorage, Gizmos};
 use std::{any::TypeId, mem};
 
@@ -87,14 +87,14 @@ impl Plugin for GizmoPlugin {
             .init_asset::<LineGizmo>()
             .add_plugins(RenderAssetPlugin::<LineGizmo>::default())
             .init_resource::<LineGizmoHandles>()
-            .init_resource::<GizmoConfigStore>()
             .init_gizmo_config::<DefaultGizmoConfig>()
             .init_gizmo_config::<AabbGizmoConfig>()
             .add_systems(
                 PostUpdate,
                 (
                     draw_aabbs,
-                    draw_all_aabbs.run_if(|config: Res<AabbGizmoConfig>| config.draw_all),
+                    draw_all_aabbs
+                        .run_if(|config: Query<&AabbGizmoConfig>| config.single().draw_all),
                 )
                     .after(TransformSystem::TransformPropagate),
             );
@@ -152,13 +152,10 @@ impl AppGizmoBuilder for App {
             return self;
         }
 
-        self.init_resource::<T>()
-            .init_resource::<GizmoStorage<T>>()
+        self.init_resource::<GizmoStorage<T>>()
             .add_systems(Last, update_gizmo_meshes::<T>);
 
-        self.world
-            .resource_mut::<GizmoConfigStore>()
-            .regsiter::<T>();
+        self.world.spawn((GizmoConfig::default(), T::default()));
 
         let Ok(render_app) = self.get_sub_app_mut(RenderApp) else {
             return self;
@@ -182,9 +179,10 @@ pub struct ShowAabbGizmo {
 
 fn draw_aabbs(
     query: Query<(Entity, &Aabb, &GlobalTransform, &ShowAabbGizmo)>,
-    config: Res<AabbGizmoConfig>,
+    config: Query<&AabbGizmoConfig>,
     mut gizmos: Gizmos<AabbGizmoConfig>,
 ) {
+    let config = config.single();
     for (entity, &aabb, &transform, gizmo) in &query {
         let color = gizmo
             .color
@@ -196,9 +194,10 @@ fn draw_aabbs(
 
 fn draw_all_aabbs(
     query: Query<(Entity, &Aabb, &GlobalTransform), Without<ShowAabbGizmo>>,
-    config: Res<AabbGizmoConfig>,
+    config: Query<&AabbGizmoConfig>,
     mut gizmos: Gizmos<AabbGizmoConfig>,
 ) {
+    let config = config.single();
     for (entity, &aabb, &transform) in &query {
         let color = config
             .default_color
@@ -287,9 +286,9 @@ fn update_gizmo_meshes<T: CustomGizmoConfig>(
 fn extract_gizmo_data<T: CustomGizmoConfig>(
     mut commands: Commands,
     handles: Extract<Res<LineGizmoHandles>>,
-    config: Extract<Res<GizmoConfigStore>>,
+    config: Extract<Query<&GizmoConfig, With<T>>>,
 ) {
-    let config = config.get::<T>();
+    let config = config.single();
 
     if !config.enabled {
         return;

@@ -3,22 +3,21 @@
 use std::f32::consts::PI;
 
 use bevy::prelude::*;
-use bevy_internal::gizmos::config::GizmoConfigStore;
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
-        .init_gizmo_config::<MyGizmos>()
+        .init_gizmo_config::<MyGizmoConfig>()
         .add_systems(Startup, setup)
         .add_systems(Update, (system, update_config))
         .run();
 }
 
 // We can create our own gizmo config!
-#[derive(Resource, Default)]
-struct MyGizmos {}
+#[derive(Component, Default)]
+struct MyGizmoConfig {}
 
-impl CustomGizmoConfig for MyGizmos {}
+impl CustomGizmoConfig for MyGizmoConfig {}
 
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(Camera2dBundle::default());
@@ -35,7 +34,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     ));
 }
 
-fn system(mut gizmos: Gizmos, mut my_gizmos: Gizmos<MyGizmos>, time: Res<Time>) {
+fn system(mut gizmos: Gizmos, mut my_gizmos: Gizmos<MyGizmoConfig>, time: Res<Time>) {
     let sin = time.elapsed_seconds().sin() * 50.;
     gizmos.line_2d(Vec2::Y * -sin, Vec2::splat(-80.), Color::RED);
     gizmos.ray_2d(Vec2::Y * sin, Vec2::splat(80.), Color::GREEN);
@@ -68,11 +67,12 @@ fn system(mut gizmos: Gizmos, mut my_gizmos: Gizmos<MyGizmos>, time: Res<Time>) 
 }
 
 fn update_config(
-    mut config_store: ResMut<GizmoConfigStore>,
+    mut config: Query<&mut GizmoConfig, With<DefaultGizmoConfig>>,
+    mut my_config: Query<&mut GizmoConfig, With<MyGizmoConfig>>,
     keyboard: Res<Input<KeyCode>>,
     time: Res<Time>,
 ) {
-    let config = config_store.get_mut::<DefaultGizmoConfig>();
+    let mut config = config.single_mut();
     if keyboard.pressed(KeyCode::Right) {
         config.line_width += 5. * time.delta_seconds();
         config.line_width = config.line_width.clamp(0., 50.);
@@ -85,7 +85,7 @@ fn update_config(
         config.enabled ^= true;
     }
 
-    let my_config = config_store.get_mut::<DefaultGizmoConfig>();
+    let mut my_config = my_config.single_mut();
     if keyboard.pressed(KeyCode::Up) {
         my_config.line_width += 5. * time.delta_seconds();
         my_config.line_width = my_config.line_width.clamp(0., 50.);

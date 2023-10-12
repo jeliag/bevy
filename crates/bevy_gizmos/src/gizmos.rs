@@ -4,18 +4,17 @@ use std::{f32::consts::TAU, iter, marker::PhantomData};
 
 use bevy_ecs::{
     component::Tick,
-    system::{Deferred, ReadOnlySystemParam, Res, Resource, SystemBuffer, SystemMeta, SystemParam},
+    query::With,
+    system::{
+        Deferred, Query, ReadOnlySystemParam, Resource, SystemBuffer, SystemMeta, SystemParam,
+    },
     world::{unsafe_world_cell::UnsafeWorldCell, World},
 };
 use bevy_math::{Mat2, Quat, Vec2, Vec3};
 use bevy_render::color::Color;
 use bevy_transform::TransformPoint;
 
-use crate::{
-    config::CustomGizmoConfig,
-    config::{DefaultGizmoConfig, GizmoConfigStore},
-    prelude::GizmoConfig,
-};
+use crate::{config::CustomGizmoConfig, config::DefaultGizmoConfig, prelude::GizmoConfig};
 
 type PositionItem = [f32; 3];
 type ColorItem = [f32; 4];
@@ -38,7 +37,7 @@ pub(crate) struct GizmoStorage<T: CustomGizmoConfig> {
 /// Gizmos should be spawned before the [`Last`](bevy_app::Last) schedule to ensure they are drawn.
 pub struct Gizmos<'w, 's, T: CustomGizmoConfig = DefaultGizmoConfig> {
     buffer: Deferred<'s, GizmoBuffer<T>>,
-    _groups: Res<'w, GizmoConfigStore>,
+    _config_q: Query<'w, 's, &'static GizmoConfig, With<T>>,
     config: GizmoConfig,
 }
 
@@ -47,7 +46,7 @@ const _: () = {
     pub struct FetchState<T: CustomGizmoConfig> {
         state: (
             <Deferred<'static, GizmoBuffer<T>> as SystemParam>::State,
-            <Res<'static, GizmoConfigStore> as SystemParam>::State,
+            <Query<'static, 'static, &'static GizmoConfig, With<T>> as SystemParam>::State,
         ),
     }
     unsafe impl<T: CustomGizmoConfig> SystemParam for Gizmos<'_, '_, T> {
@@ -60,7 +59,7 @@ const _: () = {
                         world,
                         system_meta,
                     ),
-                    <Res<'static, GizmoConfigStore> as SystemParam>::init_state(world, system_meta),
+                    <Query<'static, 'static,  &'static GizmoConfig, With<T>> as SystemParam>::init_state(world, system_meta),
                 ),
             }
         }
@@ -74,7 +73,7 @@ const _: () = {
                 archetype,
                 system_meta,
             );
-            <Res<'static, GizmoConfigStore> as SystemParam>::new_archetype(
+            <Query<'static, 'static, &'static GizmoConfig, With<T>> as SystemParam>::new_archetype(
                 &mut state.state.1,
                 archetype,
                 system_meta,
@@ -86,7 +85,7 @@ const _: () = {
                 system_meta,
                 world,
             );
-            <Res<'static, GizmoConfigStore> as SystemParam>::apply(
+            <Query<'static, 'static, &'static GizmoConfig, With<T>> as SystemParam>::apply(
                 &mut state.state.1,
                 system_meta,
                 world,
@@ -104,18 +103,19 @@ const _: () = {
                 world,
                 change_tick,
             );
-            let f1 = <Res<'static, GizmoConfigStore> as SystemParam>::get_param(
-                &mut state.state.1,
-                system_meta,
-                world,
-                change_tick,
-            );
-            // Accessing the GizmoConfigStore in the immediate mode API reduces performance significantly.
+            let f1 =
+                <Query<'static, 'static, &'static GizmoConfig, With<T>> as SystemParam>::get_param(
+                    &mut state.state.1,
+                    system_meta,
+                    world,
+                    change_tick,
+                );
+            // Calling single() in the immediate mode API reduces performance significantly.
             // Implementing SystemParam manually allows us to do it to here:
-            let config = f1.get::<T>().clone();
+            let config = f1.single().clone();
             Gizmos {
                 buffer: f0,
-                _groups: f1,
+                _config_q: f1,
                 config,
             }
         }
@@ -123,7 +123,7 @@ const _: () = {
     unsafe impl<'w, 's, T: CustomGizmoConfig> ReadOnlySystemParam for Gizmos<'w, 's, T>
     where
         Deferred<'s, GizmoBuffer<T>>: ReadOnlySystemParam,
-        Res<'w, GizmoConfigStore>: ReadOnlySystemParam,
+        Query<'w, 's, &'static GizmoConfig, With<T>>: ReadOnlySystemParam,
     {
     }
 };
