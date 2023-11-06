@@ -13,7 +13,7 @@ pub trait CustomGizmoConfig: 'static + Default + Send + Sync {}
 pub struct DefaultGizmos;
 impl CustomGizmoConfig for DefaultGizmos {}
 
-/// A struct that stores configuration for gizmos.
+/// A [`Resource`] that stores configuration for gizmos.
 #[derive(Resource, Clone)]
 pub struct GizmoConfig<T: CustomGizmoConfig = DefaultGizmos> {
     /// Set to `false` to stop drawing gizmos.
@@ -34,6 +34,8 @@ pub struct GizmoConfig<T: CustomGizmoConfig = DefaultGizmos> {
     pub line_perspective: bool,
     /// How closer to the camera than real geometry the line should be.
     ///
+    /// In 2D this setting has no effect and is effectively always -1.
+    ///
     /// Value between -1 and 1 (inclusive).
     /// * 0 means that there is no change to the line position when rendering
     /// * 1 means it is furthest away from camera as possible
@@ -41,7 +43,7 @@ pub struct GizmoConfig<T: CustomGizmoConfig = DefaultGizmos> {
     ///
     /// This is typically useful if you are drawing wireframes on top of polygons
     /// and your wireframe is z-fighting (flickering on/off) with your main model.
-    /// You would set this value to a negative number close to 0.0.
+    /// You would set this value to a negative number close to 0.
     pub depth_bias: f32,
     /// Describes which rendering layers gizmos will be rendered to.
     ///
